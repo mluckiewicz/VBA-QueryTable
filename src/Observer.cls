@@ -7,112 +7,112 @@ Attribute VB_GlobalNameSpace = False
 Attribute VB_Creatable = False
 Attribute VB_PredeclaredId = False
 Attribute VB_Exposed = False
-' Klasa Observer - mo¿e odbieraæ powiadomienia od wielu Publisherów
+' Observer Class - can receive notifications from multiple Publishers
 Option Explicit
 
-' S³ownik przechowuj¹cy handlerów i stany Publisherów
+' Dictionary to store handlers and states of Publishers
 Private publishers As Object
 
-' Inicjalizacja klasy
+' Class Initialization
 Private Sub Class_Initialize()
-    ' Tworzymy s³ownik dla przechowywania handlerów i stanów
+    ' Create a dictionary for storing handlers and states
     Set publishers = CreateObject("Scripting.Dictionary")
 End Sub
 
-' Rejestracja nowego Publishera do obserwowania
-' Publisher: Instancja klasy Publisher, któr¹ chcemy zarejestrowaæ
+' Register a new Publisher to observe
+' Publisher: Instance of the Publisher class to be registered
 Public Sub RegisterPublisher(ByRef Publisher As Publisher)
     Dim publisherId As String
     publisherId = CStr(ObjPtr(Publisher))
 
-    ' SprawdŸ, czy Publisher jest ju¿ zarejestrowany
+    ' Check if the Publisher is already registered
     If Not IsPublisherRegistered(publisherId) Then
-        ' Zainicjuj i dodaj nowego Publishera
+        ' Initialize and add the new Publisher
         Dim handler As PublisherEventHandler
         Set handler = CreateNewHandler(Publisher)
         
         RegisterNewPublisher publisherId, handler
-        LogMessage "Zarejestrowano publisher: " & publisherId & " w obserwatorze " & ObjPtr(Me)
+        LogMessage "Registered publisher: " & publisherId & " in observer " & ObjPtr(Me)
     Else
-        LogMessage "Publisher o ID " & publisherId & " ju¿ jest zarejestrowany."
+        LogMessage "Publisher with ID " & publisherId & " is already registered."
     End If
 End Sub
 
-' Sprawdza, czy Publisher o danym Id jest ju¿ zarejestrowany
-' publisherId: Id Publishera, który chcemy sprawdziæ
-' Zwraca True, jeœli Publisher jest zarejestrowany, w przeciwnym razie False
+' Checks if the Publisher with the given Id is already registered
+' publisherId: ID of the Publisher to check
+' Returns True if the Publisher is registered, otherwise False
 Private Function IsPublisherRegistered(ByVal publisherId As String) As Boolean
     IsPublisherRegistered = publishers.Exists(publisherId)
 End Function
 
-' Tworzy nowy obiekt PublisherEventHandler i przypisuje go do Publishera
-' Publisher: Instancja klasy Publisher, dla której tworzymy handler
-' Zwraca nowy obiekt PublisherEventHandler
+' Creates a new PublisherEventHandler object and assigns it to the Publisher
+' Publisher: Instance of the Publisher class for which the handler is created
+' Returns a new PublisherEventHandler object
 Private Function CreateNewHandler(ByRef Publisher As Publisher) As PublisherEventHandler
     Dim handler As PublisherEventHandler
     Set handler = New PublisherEventHandler
-    handler.Init Publisher, Me ' Inicjalizacja handlera
+    handler.Init Publisher, Me ' Initialize the handler
     Set CreateNewHandler = handler
 End Function
 
-' Rejestruje nowego Publishera w g³ównym s³owniku
-' publisherId: Id Publishera, który chcemy zarejestrowaæ
-' handler: Obiekt PublisherEventHandler zwi¹zany z tym Publisherem
+' Registers a new Publisher in the main dictionary
+' publisherId: ID of the Publisher to register
+' handler: PublisherEventHandler object associated with this Publisher
 Private Sub RegisterNewPublisher(ByVal publisherId As String, ByRef handler As PublisherEventHandler)
-    ' Tworzymy nowy s³ownik dla danego Publishera
+    ' Create a new dictionary for the given Publisher
     Dim publisherData As Object
     Set publisherData = CreateObject("Scripting.Dictionary")
     
-    ' Przypisujemy handler i inicjalizujemy stan
+    ' Assign the handler and initialize the state
     publisherData.Add "handler", handler
-    publisherData.Add "state", False ' Pocz¹tkowy stan
+    publisherData.Add "state", False ' Initial state
     
-    ' Dodajemy do g³ównego s³ownika publishers
+    ' Add to the main publishers dictionary
     publishers.Add publisherId, publisherData
 End Sub
 
-' Wyrejestrowanie Publishera (opcjonalna metoda)
-' Publisher: Instancja klasy Publisher, któr¹ chcemy wyrejestrowaæ
+' Unregister a Publisher (optional method)
+' Publisher: Instance of the Publisher class to unregister
 Public Sub UnregisterPublisher(ByRef Publisher As Publisher)
     Dim publisherId As String
     publisherId = CStr(ObjPtr(Publisher))
     
     If publishers.Exists(publisherId) Then
         publishers.Remove publisherId
-        LogMessage "Wyrejestrowano publisher: " & publisherId
+        LogMessage "Unregistered publisher: " & publisherId
     Else
-        LogMessage "Publisher o ID " & publisherId & " nie istnieje."
+        LogMessage "Publisher with ID " & publisherId & " does not exist."
     End If
 End Sub
 
-' Metoda obs³uguj¹ca zmiany stanu od dowolnego Publishera
-' Publisher: Instancja klasy Publisher, która zg³asza zmianê stanu
-' Success: Zmienna logiczna informuj¹ca, czy zmiana stanu by³a udana
+' Method that handles state changes from any Publisher
+' Publisher: Instance of the Publisher class that reports a state change
+' Success: Boolean indicating whether the state change was successful
 Public Sub HandleStateChange(ByRef Publisher As Publisher, ByVal Success As Boolean)
     Dim publisherId As String
     publisherId = CStr(ObjPtr(Publisher))
 
-    ' Sprawdzanie i aktualizacja stanu danego Publishera
+    ' Check and update the state of the given Publisher
     If publishers.Exists(publisherId) Then
         UpdatePublisherState publisherId, Success
-        LogMessage "Obserwer " & ObjPtr(Me) & " otrzyma³ powiadomienie z obiektu Publisher " & ObjPtr(Publisher) & ": " & Success
+        LogMessage "Observer " & ObjPtr(Me) & " received notification from Publisher " & ObjPtr(Publisher) & ": " & Success
 
-        ' Sprawdzanie, czy wszystkie Publishery s¹ zaktualizowane
+        ' Check if all Publishers are updated
         If AllPublishersUpdated() Then
             HandleAllPublishersUpdated
         End If
     End If
 End Sub
 
-' Aktualizuje stan dla danego Publishera
-' publisherId: Id Publishera, którego stan chcemy zaktualizowaæ
-' Success: Zmienna logiczna informuj¹ca o nowym stanie Publishera
+' Updates the state for a given Publisher
+' publisherId: ID of the Publisher whose state needs to be updated
+' Success: Boolean indicating the new state of the Publisher
 Private Sub UpdatePublisherState(ByVal publisherId As String, ByVal Success As Boolean)
     publishers(publisherId)("state") = Success
 End Sub
 
-' Sprawdza, czy wszystkie Publishery zosta³y zaktualizowane
-' Zwraca True, jeœli wszystkie Publishery s¹ zaktualizowane, w przeciwnym razie False
+' Checks if all Publishers have been updated
+' Returns True if all Publishers are updated, otherwise False
 Private Function AllPublishersUpdated() As Boolean
     Dim key As Variant
     For Each key In publishers.Keys
@@ -124,23 +124,23 @@ Private Function AllPublishersUpdated() As Boolean
     AllPublishersUpdated = True
 End Function
 
-' Dzia³ania wykonywane, gdy wszystkie Publishery s¹ zaktualizowane
+' Actions performed when all Publishers are updated
 Private Sub HandleAllPublishersUpdated()
-    LogMessage "Zmieniono stan wszystkich Publisherów."
+    LogMessage "All Publishers' states have changed."
     ResetPublisherStates
 End Sub
 
-' Resetowanie stanów wszystkich Publisherów
+' Reset the states of all Publishers
 Private Sub ResetPublisherStates()
     Dim key As Variant
     For Each key In publishers.Keys
-        publishers(key)("state") = False ' Resetujemy stan
+        publishers(key)("state") = False ' Reset the state
     Next key
-    LogMessage "Stany Publisherów zresetowane."
+    LogMessage "Publishers' states have been reset."
 End Sub
 
-' Uniwersalna metoda do logowania wiadomoœci
-' message: Treœæ wiadomoœci do zalogowania
+' Universal method for logging messages
+' message: Content of the message to log
 Private Sub LogMessage(ByVal message As String)
     Debug.Print message
 End Sub
