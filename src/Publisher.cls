@@ -17,7 +17,16 @@ Option Explicit
 Public Event OnStateChanged(ByVal Success As Boolean)
 Private WithEvents QT As Excel.QueryTable
 Attribute QT.VB_VarHelpID = -1
+
 Private currentState As Boolean ' Prywatna zmienna przechowuj¹ca stan
+Private publisherId As String
+
+Public Sub SetID(ByVal ID As String)
+    publisherId = ID
+End Sub
+Public Function GetID() As String
+    GetID = publisherId
+End Function
 
 ' Przypisujemy Excel.QueryTable dla Ÿród³a danych
 Public Sub SetQueryTable(ByVal qtObject As Excel.QueryTable)
@@ -32,7 +41,7 @@ Private Sub QT_AfterRefresh(ByVal Success As Boolean)
 End Sub
 
 ' Metoda zwracaj¹ca bie¿¹cy stan
-Public Function GetState() As String
+Public Function GetState() As Boolean
     GetState = currentState
 End Function
 
